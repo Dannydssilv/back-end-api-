@@ -3,14 +3,23 @@ import pkg from "pg";
 import dotenv from "dotenv";
 
 dotenv.config();
+
 const { Pool } = pkg;
 const app = express();
 const port = 3000;
 
-// --- Conexão com o banco de dados (fora da rota) ---
-const db = new Pool({
-  connectionString: process.env.URL_BD,
-});
+let pool = null;
+
+function conectarBD() {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.URL_BD,
+    });
+  }
+  return pool;
+}
+
+const db = conectarBD();
 
 let dbStatus = "ok";
 try {
@@ -20,7 +29,6 @@ try {
   dbStatus = e.message;
   console.error("Erro na conexão com o banco de dados:", dbStatus);
 }
-// --- Fim da conexão ---
 
 app.get("/", async (req, res) => {
   console.log("Rota GET / solicitada");
