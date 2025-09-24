@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Ela é uma diva",
   "main": "server.js",
-  "scripts": {},
+  "scripts": {
+    "start": "node server.js"
+  },
   "keywords": [],
   "author": "Daniely dos Santos Silva",
   "license": "ISC",

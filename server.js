@@ -1,11 +1,11 @@
-import express from "express"; 
+import express from "express";
 import pkg from "pg";
 import dotenv from "dotenv";
 
-dotenv.config(); 
-const { Pool } = pkg; 
-const app = express(); 
-const port = 3000; 
+dotenv.config();
+const { Pool } = pkg;
+const app = express();
+const port = 3000;
 
 // --- Conexão com o banco de dados (fora da rota) ---
 const db = new Pool({
@@ -14,8 +14,6 @@ const db = new Pool({
 
 let dbStatus = "ok";
 try {
-  // A 'await' só pode ser usada em uma função 'async'.
-  // Para funcionar no nível superior, verifique se seu package.json tem "type": "module"
   await db.query("SELECT 1");
   console.log("Conexão com o banco de dados estabelecida com sucesso!");
 } catch (e) {
@@ -29,7 +27,23 @@ app.get("/", async (req, res) => {
   res.json({
     message: "API para atividade",
     author: "Daniely dos Santos Silva",
-    statusBD: dbStatus  });
+    statusBD: dbStatus,
+  });
+});
+
+app.get("/questoes", async (req, res) => {
+  console.log("Rota GET /questoes solicitada");
+  try {
+    const resultado = await db.query("SELECT * FROM questoes");
+    const dados = resultado.rows;
+    res.json(dados);
+  } catch (e) {
+    console.error("Erro ao buscar questões:", e);
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+      mensagem: "Não foi possível buscar as questões",
+    });
+  }
 });
 
 app.listen(port, () => {
