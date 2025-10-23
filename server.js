@@ -94,7 +94,8 @@ app.post("/questoes", async (req, res) => {
     if (!data.enunciado || !data.disciplina || !data.tema || !data.nivel) {
       return res.status(400).json({
         erro: "Dados inválidos",
-        mensagem: "Todos os campos (enunciado, disciplina, tema, nivel) são obrigatórios.",
+        mensagem:
+          "Todos os campos (enunciado, disciplina, tema, nivel) são obrigatórios.",
       });
     }
     const db = conectarBD();
@@ -138,6 +139,137 @@ app.put("/questoes/:id", async (req, res) => {
   } catch (e) {
     console.error("Erro ao atualizar questão:", e);
     res.status(500).json({ erro: "Erro interno do servidor" });
+  }
+});
+
+
+app.post("/usuarios", async (req, res) => {
+  console.log("Rota POST /usuarios solicitada");
+  try {
+    const { nome, email, senha } = req.body;
+
+    if (!nome || !email || !senha) {
+      return res.status(400).json({
+        erro: "Dados inválidos",
+        mensagem: "Todos os campos (nome, email, senha) são obrigatórios.",
+      });
+    }
+
+    const db = conectarBD();
+    const consulta =
+      "INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3) RETURNING id, nome, email";
+
+    const resultado = await db.query(consulta, [nome, email, senha]);
+
+    res.status(201).json({
+      mensagem: "Usuário criado com sucesso!",
+      usuario: resultado.rows[0],
+    });
+  } catch (e) {
+    console.error("Erro ao criar usuário:", e);
+    if (e.code === "23505") {
+      return res.status(409).json({
+        erro: "Conflito",
+        mensagem: "O email fornecido já está em uso.",
+      });
+    }
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+    });
+  }
+});
+
+app.get("/usuarios", async (req, res) => {
+  console.log("Rota GET /usuarios solicitada");
+  const db = conectarBD();
+  try {
+    const resultado = await db.query("SELECT id, nome, email FROM usuarios");
+    res.json(resultado.rows);
+  } catch (e) {
+    console.error("Erro ao listar usuários:", e);
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+    });
+  }
+});
+
+app.get("/usuarios/:id", async (req, res) => {
+  console.log("Rota GET /usuarios/:id solicitada");
+  try {
+    const id = req.params.id;
+    const db = conectarBD();
+    const consulta = "SELECT id, nome, email FROM usuarios WHERE id = $1";
+    const resultado = await db.query(consulta, [id]);
+    const dados = resultado.rows;
+
+    if (dados.length === 0) {
+      return res.status(404).json({ mensagem: "Usuário não encontrado" });
+    }
+    res.json(dados[0]);
+  } catch (e) {
+    console.error("Erro ao buscar usuário:", e);
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+    });
+  }
+});
+
+app.put("/usuarios/:id", async (req, res) => {
+  console.log("Rota PUT /usuarios/:id solicitada");
+  try {
+    const id = req.params.id;
+    const { nome, email, senha } = req.body;
+
+    if (!nome || !email || !senha) {
+      return res.status(400).json({
+        erro: "Dados inválidos",
+        mensagem:
+          "Todos os campos (nome, email, senha) são obrigatórios para a atualização.",
+      });
+    }
+
+    const db = conectarBD();
+    const consulta =
+      "UPDATE usuarios SET nome = $1, email = $2, senha = $3 WHERE id = $4 RETURNING id";
+
+    const resultado = await db.query(consulta, [nome, email, senha, id]);
+
+    if (resultado.rowCount === 0) {
+      return res
+        .status(404)
+        .json({ mensagem: "Usuário não encontrado para atualização" });
+    }
+
+    res.status(200).json({ mensagem: "Usuário atualizado com sucesso!" });
+  } catch (e) {
+    console.error("Erro ao atualizar usuário:", e);
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+    });
+  }
+});
+
+app.delete("/usuarios/:id", async (req, res) => {
+  console.log("Rota DELETE /usuarios/:id solicitada");
+  try {
+    const id = req.params.id;
+    const db = conectarBD();
+
+    const consulta = "DELETE FROM usuarios WHERE id = $1";
+    const resultado = await db.query(consulta, [id]);
+
+    if (resultado.rowCount === 0) {
+      return res
+        .status(404)
+        .json({ mensagem: "Usuário não encontrado para exclusão" });
+    }
+
+    res.status(200).json({ mensagem: "Usuário excluído com sucesso!" });
+  } catch (e) {
+    console.error("Erro ao excluir usuário:", e);
+    res.status(500).json({
+      erro: "Erro interno do servidor",
+    });
   }
 });
 
